@@ -127,7 +127,7 @@ function theme_enqueue_block_editor_assets() {
  *
  * @param  array   $allowed_block_types Currently allowed types.
  * @param  WP_Post $post                Post object.
- * @return array                        Array of allowed types.
+ * @return array|bool                   Array of allowed types. True if all blocks, false if no blocks.
  */
 function theme_allowed_block_types( $allowed_block_types, $post ) {
 
