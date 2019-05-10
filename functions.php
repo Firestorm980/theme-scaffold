@@ -27,7 +27,7 @@ foreach ( $requires as $require ) {
 
 // Run the setup functions.
 TenUpScaffold\Core\setup();
-TenUpScaffold\Overrides\setup();
+TenUpScaffold\Blocks\setup();
 
 TenUpScaffold\Gutenberg\setup();
 TenUpScaffold\Post_Type\Groups\setup();
