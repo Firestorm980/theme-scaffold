@@ -47,8 +47,8 @@ const whitelist = () => {
  */
 const init = () => {
 	window.wp.domReady( () => {
-		//blacklist();
-		whitelist();
+		blacklist();
+		//whitelist();
 	} );
 };
 

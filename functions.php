@@ -12,6 +12,7 @@ define( 'TENUP_SCAFFOLD_PATH', get_template_directory() . '/' );
 define( 'TENUP_SCAFFOLD_INC', TENUP_SCAFFOLD_PATH . 'includes/' );
 
 $requires = [
+	'blocks',
 	'core',
 	'overrides',
 	'template-tags',
@@ -27,8 +28,7 @@ foreach ( $requires as $require ) {
 
 // Run the setup functions.
 TenUpScaffold\Core\setup();
-TenUpScaffold\Blocks\setup();
-
+// TenUpScaffold\Blocks\setup();
 TenUpScaffold\Gutenberg\setup();
 TenUpScaffold\Post_Type\Groups\setup();
 TenUpScaffold\Post_Type\Projects\setup();
