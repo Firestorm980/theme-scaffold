@@ -15,8 +15,8 @@ const isProduction = 'production' === process.env.NODE_ENV;
 const settings = require( './webpack.settings.js' );
 
 /**
- * Configure CSS entries.
- */
+* Configure CSS entries.
+*/
 const configureEntriesCss = () => {
 	const entries = {};
 
@@ -28,8 +28,8 @@ const configureEntriesCss = () => {
 };
 
 /**
- * Configure JS entries.
- */
+* Configure JS entries.
+*/
 const configureEntriesJs = () => {
 	const entries = {};
 
@@ -40,32 +40,61 @@ const configureEntriesJs = () => {
 	return entries;
 };
 
-const rules = {
-	lintjs: {
+/**
+* Configure ES Lint Loader
+*/
+const configureEslintLoader = () => {
+	return {
 		test: /\.js$/,
 		enforce: 'pre',
 		loader: 'eslint-loader',
 		options: {
-			fix: true
+			fix: true,
 		}
-	},
-	scripts: {
+	};
+};
+
+/**
+* Configure Babel Loader
+* @param {Array} browserlist Array of browsers to pass.
+*/
+const configureBabelLoader = ( browserlist ) => {
+	return {
 		test: /\.js$/,
-		exclude: /node_modules/,
-		use: [
-			{
-				loader: 'babel-loader',
-				options: {
-					presets: [ '@babel/preset-env' ],
-					cacheDirectory: true,
-					sourceMap: ! isProduction,
-				},
+		use: {
+			loader: 'babel-loader',
+			options: {
+				babelrc: false,
+				exclude: [
+					/core-js/,
+					/regenerator-runtime/,
+				],
+				presets: [
+					['@babel/preset-env', {
+						loose: true,
+						modules: false,
+						// debug: true,
+						corejs: 3,
+						useBuiltIns: 'usage',
+						targets: {
+							browsers: browserlist,
+						},
+					}],
+				],
+				plugins: ['@babel/plugin-syntax-dynamic-import'],
+				cacheDirectory: true,
+				sourceMap: ! isProduction,
 			},
-		],
-	},
-	styles: {
+		},
+	};
+};
+
+/**
+* Configure Styles Loader
+*/
+const configureStylesLoader = () => {
+	return {
 		test: /\.css$/,
-		include: path.resolve( process.cwd(), settings.paths.src.css ),
 		use: [
 			{
 				loader: MiniCssExtractPlugin.loader,
@@ -85,13 +114,12 @@ const rules = {
 				},
 			},
 		],
-	},
+	};
 };
 
 const defaults = {
 	output: {
 		path: path.resolve( process.cwd(), settings.paths.dist.base ),
-		filename: settings.filename.js,
 	},
 
 	// Console stats output.
@@ -106,17 +134,6 @@ const defaults = {
 	// Performance settings.
 	performance: {
 		maxAssetSize: settings.performance.maxAssetSize,
-	},
-
-	// Build rules to handle asset files.
-	module: {
-		rules: [
-			// Lint JS.
-			rules.lintjs,
-
-			// Scripts.
-			rules.scripts
-		],
 	},
 
 	plugins: [
@@ -155,81 +172,74 @@ const defaults = {
 
 const es5 = merge.smart( defaults, {
 	name: 'es5',
-	entry: Object.assign( {},
-		configureEntriesJs()
-	),
+	entry: configureEntriesJs(),
 	output: {
 		filename: settings.filename.es5,
 	},
 	module: {
 		rules: [
-			// Scripts.
-			{
-				test: /\.js$/,
-				exclude: /node_modules/,
-				use: [
-					{
-						loader: 'babel-loader',
-						options: {
-							presets: [ [
-								'@babel/preset-env', {
-									targets: {
-										esmodules: false
-									}
-								}
-							] ],
-						},
-					},
-				],
-			},
-		]
-	}
-} );
-
-const es6 = merge.smart( defaults, {
-	name: 'es6',
-	entry: Object.assign( {},
-		configureEntriesJs(),
-		configureEntriesCss()
-	),
-	module: {
-		rules: [
-			// Scripts.
-			{
-				test: /\.js$/,
-				exclude: /node_modules/,
-				use: [
-					{
-						loader: 'babel-loader',
-						options: {
-							presets: [ [
-								'@babel/preset-env', {
-									targets: {
-										edge: '16',
-										firefox: '60',
-										chrome: '61',
-										safari: '11',
-										opera: '48',
-										ios: '11'
-									}
-								}
-							] ],
-						},
-					},
-				],
-			},
-
-			// Styles
-			rules.styles,
+			configureEslintLoader(),
+			configureBabelLoader( [
+				'> 1%',
+				'last 2 versions',
+				'Firefox ESR',
+			] ),
 		]
 	},
 	plugins: [
 		// Clean the `dist` folder on build.
-		new CleanWebpackPlugin(),
+		new CleanWebpackPlugin( {
+			cleanAfterEveryBuildPatterns: ['**/*.js']
+		} ),
+	]
+} );
+
+const es6 = merge.smart( defaults, {
+	name: 'es6',
+	entry: configureEntriesJs(),
+	output: {
+		filename: settings.filename.js,
+	},
+	module: {
+		rules: [
+			configureEslintLoader(),
+			configureBabelLoader( [
+				// The last two versions of each browser, excluding versions
+				// that don't support <script type="module">.
+				'last 2 Chrome versions', 'not Chrome < 60',
+				'last 2 Safari versions', 'not Safari < 10.1',
+				'last 2 iOS versions', 'not iOS < 10.3',
+				'last 2 Firefox versions', 'not Firefox < 54',
+				'last 2 Edge versions', 'not Edge < 15',
+			] ),
+		]
+	},
+	plugins: [
+		// Clean the `dist` folder on build.
+		new CleanWebpackPlugin( {
+			cleanAfterEveryBuildPatterns: ['**/*.mjs']
+		} ),
+	]
+} );
+
+const styles = merge.smart( defaults, {
+	name: 'styles',
+	entry: configureEntriesCss(),
+	module: {
+		rules: [
+			configureStylesLoader()
+		]
+	},
+	plugins: [
+		// Clean the `dist` folder on build.
+		new CleanWebpackPlugin( {
+			cleanAfterEveryBuildPatterns: ['**/*.css']
+		} ),
 	]
 } );
 
 module.exports = [
 	es5,
-	es6
+	es6,
+	styles
 ];
