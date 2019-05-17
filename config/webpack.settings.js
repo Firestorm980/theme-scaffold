@@ -22,7 +22,7 @@ module.exports = {
 	filename: {
 		js: 'js/[name].mjs',
 		css: 'css/[name].css',
-		es5: 'js/[name].es5.js'
+		es5: 'js/[name].js'
 	},
 	paths: {
 		src: {
